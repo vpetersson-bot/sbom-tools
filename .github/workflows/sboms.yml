@@ -156,9 +156,15 @@ jobs:
           # The release tag when a release built this, else empty.
           TAG: ${{ (github.event.workflow_run.event == 'release' && github.event.workflow_run.head_branch) || (github.ref_type == 'tag' && github.ref_name) || '' }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          SBOM_TOOLS_PRODUCT_ID: ${{ vars.SBOM_TOOLS_PRODUCT_ID }}
         run: |
           if [[ -n "$TAG" ]]; then
             {
+              # sbomify-action tags its own SBOMs into this same release for
+              # every version that pins it.
+              if [[ -n "$SBOM_TOOLS_PRODUCT_ID" ]]; then
+                echo "product_release=[\"${SBOM_TOOLS_PRODUCT_ID}:${TAG}\"]"
+              fi
               echo "is_prod=true"
               echo "version=${TAG}"
               echo "api_base_url=https://app.sbomify.com"
@@ -181,6 +187,7 @@ jobs:
           COMPONENT_ID: ${{ steps.cfg.outputs.is_prod == 'true' && matrix.prod_id || matrix.staging_id }}
           COMPONENT_NAME: ${{ matrix.component_name }}
           COMPONENT_VERSION: ${{ steps.cfg.outputs.version }}
+          PRODUCT_RELEASE: ${{ steps.cfg.outputs.product_release }}
           LOCK_FILE: ${{ matrix.lockfile }}
           ADDITIONAL_PACKAGES_FILE: ${{ matrix.lockfile == 'none' && 'additional_packages.txt' || '' }}
           SBOM_FORMAT: cyclonedx
@@ -222,9 +229,15 @@ jobs:
           # The release tag when a release built this, else empty.
           TAG: ${{ (github.event.workflow_run.event == 'release' && github.event.workflow_run.head_branch) || (github.ref_type == 'tag' && github.ref_name) || '' }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          SBOM_TOOLS_PRODUCT_ID: ${{ vars.SBOM_TOOLS_PRODUCT_ID }}
         run: |
           if [[ -n "$TAG" ]]; then
             {
+              # sbomify-action tags its own SBOMs into this same release for
+              # every version that pins it.
+              if [[ -n "$SBOM_TOOLS_PRODUCT_ID" ]]; then
+                echo "product_release=[\"${SBOM_TOOLS_PRODUCT_ID}:${TAG}\"]"
+              fi
               echo "is_prod=true"
               echo "release=${TAG}"
               echo "version=${TAG}"
@@ -271,6 +284,7 @@ jobs:
           COMPONENT_ID: ${{ steps.cfg.outputs.is_prod == 'true' && matrix.prod_id || matrix.staging_id }}
           COMPONENT_NAME: sbom-tools - ${{ matrix.bundle }} bundle
           COMPONENT_VERSION: ${{ steps.cfg.outputs.version }}
+          PRODUCT_RELEASE: ${{ steps.cfg.outputs.product_release }}
           SBOM_FILE: bundle-${{ matrix.bundle }}.cdx.json
           UPLOAD: 'true'
           AUGMENT: 'true'
